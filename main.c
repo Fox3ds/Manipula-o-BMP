@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -47,6 +46,7 @@ int main()
     char arquivo_r[40];
     char arquivo_b[40];
     char arquivo_INV[40];
+    char arquivo_CORT[40];
 
     int i;
     int j;
@@ -61,13 +61,15 @@ int main()
     strcpy(arquivo_g, arquivo);
     strcpy(arquivo_r, arquivo);
     strcpy(arquivo_b, arquivo);
-     strcpy(arquivo_INV, arquivo);
+    strcpy(arquivo_INV, arquivo);
+    strcpy(arquivo_CORT, arquivo);
 
-    strcat(arquivo_GR, "_GR.bmp");
+    strcat(arquivo_GR, "_gs.bmp");
     strcat(arquivo_g, "_g.bmp");
     strcat(arquivo_r, "_r.bmp");
     strcat(arquivo_b, "_b.bmp");
     strcat(arquivo_INV, "_inv.bmp");
+    strcat(arquivo_CORT, "_cort.h");
 
 
 
@@ -84,6 +86,7 @@ int main()
     FILE *verde = fopen(arquivo_g, "wb");
     FILE *cinza = fopen(arquivo_GR, "wb");
     FILE *invertido = fopen(arquivo_INV, "wb");
+    FILE *cortado = fopen(arquivo_CORT, "wb");
     int d;
 
 
@@ -96,10 +99,22 @@ int main()
 
 
     fread(&Head, sizeof(BMPinfoHead), 1, fzao);
-    printf("primeiros characteres %c%c\n\n", Head.BitType[0], Head.BitType[1]);
+
+    if(Head.BitType[0]=='B' && Head.BitType[1] == 'M')
+    {
+        printf("primeiros characteres %c%c\n\n", Head.BitType[0], Head.BitType[1]);
+    }
+    else
+    {
+        printf("N√£o √© um arquivo BMP amigo\n");
+    }
+
 
 
     fwrite(&Head, sizeof(BMPinfoHead), 1, azul);
+
+    printf("Nome do arquivo: %s \n", arquivo);
+    printf("Tamanho: %dx%d pixels\n", Head.BiHeight, Head.BiWidth);
 
 
 
@@ -108,7 +123,7 @@ int main()
     int linha = ((width * Head.BiBitCount + 31) / 32) * 4;//linha em bytes
 
     // Criar um local na memoria para armazenar os dados de pixel
-    char *pixelData_azul = (char *)malloc(linha * height);//FunÁ„o malloc, precisa saber para onde ira apontar.
+    char *pixelData_azul = (char *)malloc(linha * height);//Fun√ß√£o malloc, precisa saber para onde ira apontar.
 
     // Ler os dados de pixel
     fread(pixelData_azul, 1, linha * height, fzao);
@@ -128,7 +143,7 @@ int main()
         }
     }
 
-    // Escrever os dados de pixel modificados no arquivo de saÌda
+    // Escrever os dados de pixel modificados no arquivo de sa√≠da
     fwrite(pixelData_azul, 1, linha * height, azul);
 
 
@@ -192,7 +207,7 @@ int main()
         }
     }
 
-    // Escrever os dados de pixel modificados no arquivo de saÌda
+    // Escrever os dados de pixel modificados no arquivo de sa√≠da
     fwrite(pixelData_vermelho, 1, linha * height, vermelho);
 
 
@@ -225,16 +240,7 @@ int main()
 
 
             uint8_t GR = (0.11*azur+0.59*verdi+0.3*vermei);
-            int BW;
-            //transformando em branco
-            /*if(GR>50)
-            {
-                BW = 255;
-            }
-            else
-            {
-                BW=0;
-            }*/
+
 
             //Transformando tudo em cinza
             pixelData_cinza[offset] = GR;// verde
@@ -243,7 +249,7 @@ int main()
         }
     }
 
-    // Escrever os dados de pixel modificados no arquivo de saÌda
+    // Escrever os dados de pixel modificados no arquivo de sa√≠da
     fwrite(pixelData_cinza, 1, linha * height, cinza);
 
 
@@ -289,13 +295,92 @@ int main()
         }
     }
 
-    // Escrever os dados de pixel modificados no arquivo de saÌda
+    // Escrever os dados de pixel modificados no arquivo de sa√≠da
     fwrite(pixelData_invertido, 1, linha * height, invertido);
 
 
 
 
 
+rewind(fzao);
+
+
+
+    fread(&Head, sizeof(BMPinfoHead), 1, fzao);
+    Head.BiWidth = 84;
+    Head.BiHeight = 48;
+    Head.BiSizeImag = 84 * 48 * 3;
+    Head.BitSize = Head.BfOffSetBit + 84 * 48 * 3;
+    fwrite(&Head, sizeof(BMPinfoHead), 1, cortado);
+
+
+
+
+    uint8_t coordX, coordY, limiar;
+    printf("quais as coordenadas X e Y parceiro. \n\n");
+    printf("\n");
+    scanf("%i", &coordX);
+    scanf("%i", &coordY);
+    printf("qual o valor do limiair parceiro. \n\n");
+    scanf("%i", &limiar);
+    printf("\n");
+
+
+
+
+
+    char *pixelData_cortado = (char *)malloc(84 * 48 * 3);
+
+
+    // Converter os tons de cores em tons de azul
+    for (i = 0; i < 48; i++)
+    {
+        for (j = 0; j < 84; j++)
+        {
+            //variavel pra pegar o pixel
+            int src_offset = (i + coordY) * linha + (j + coordX) * 3;
+            int dest_offset = i * 84 * 3 + j * 3;
+
+
+            pixelData_cortado[dest_offset] = pixelData_cinza[src_offset];             // Azul
+            pixelData_cortado[dest_offset + 1] = pixelData_cinza[src_offset + 1];     // Verde
+            pixelData_cortado[dest_offset + 2] = pixelData_cinza[src_offset + 2];
+
+
+
+            uint8_t verdi = 0, vermei = 0, azur = 0;
+            vermei = pixelData_cortado[dest_offset];
+            azur = pixelData_cortado[dest_offset+1];
+            verdi = pixelData_cortado[dest_offset+2];
+
+
+
+            uint8_t GR = (0.11*azur+0.59*verdi+0.3*vermei);
+
+             int BW;
+            //transformando em branco
+            if(GR>limiar)
+            {
+                BW = 255;
+            }
+            else
+            {
+                BW=0;
+            }
+
+
+
+            pixelData_cortado[dest_offset] = BW;             // Azul
+            pixelData_cortado[dest_offset + 1] = BW;     // Verde
+            pixelData_cortado[dest_offset + 2] = BW;     // Vermelho
+
+
+
+        }
+    }
+
+    // Escrever os dados de pixel modificados no arquivo de sa√≠da
+    fwrite(pixelData_cortado, 1, 84 * 48*3, cortado);
 
 
 
@@ -303,8 +388,11 @@ int main()
 
 
 
-    printf("Largura: %d pixels\n", Head.BiWidth);
-    printf("Altura: %d pixels\n", Head.BiHeight);
+
+
+
+
+
 
 
     fclose(verde);
@@ -313,6 +401,7 @@ int main()
     fclose(fzao);
     fclose(cinza);
     fclose(invertido);
+    fclose(cortado);
 
 
 
