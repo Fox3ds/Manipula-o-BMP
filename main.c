@@ -69,7 +69,7 @@ int main()
     strcat(arquivo_r, "_r.bmp");
     strcat(arquivo_b, "_b.bmp");
     strcat(arquivo_INV, "_inv.bmp");
-    strcat(arquivo_CORT, "_cort.h");
+    strcat(arquivo_CORT, "_cort.bmp");
 
 
 
@@ -407,7 +407,6 @@ rewind(fzao);
 
     return 0;
 }
-
 
 
 
