@@ -69,7 +69,7 @@ int main()
     strcat(arquivo_r, "_r.bmp");
     strcat(arquivo_b, "_b.bmp");
     strcat(arquivo_INV, "_inv.bmp");
-    strcat(arquivo_CORT, "_cort.bmp");
+    strcat(arquivo_CORT, "_cort.h");
 
 
 
@@ -311,12 +311,12 @@ rewind(fzao);
     Head.BiHeight = 48;
     Head.BiSizeImag = 84 * 48 * 3;
     Head.BitSize = Head.BfOffSetBit + 84 * 48 * 3;
-    fwrite(&Head, sizeof(BMPinfoHead), 1, cortado);
+    fprintf(cortado, "unsigned char const imagem[504] = {");
 
 
 
 
-    uint8_t coordX, coordY, limiar;
+    int coordX, coordY, limiar;
     printf("quais as coordenadas X e Y parceiro. \n\n");
     printf("\n");
     scanf("%i", &coordX);
@@ -330,6 +330,7 @@ rewind(fzao);
 
 
     char *pixelData_cortado = (char *)malloc(84 * 48 * 3);
+    int cont = 0;
 
 
     // Converter os tons de cores em tons de azul
@@ -340,6 +341,9 @@ rewind(fzao);
             //variavel pra pegar o pixel
             int src_offset = (i + coordY) * linha + (j + coordX) * 3;
             int dest_offset = i * 84 * 3 + j * 3;
+            int byte[8];
+            int valorDecimal=0;
+
 
 
             pixelData_cortado[dest_offset] = pixelData_cinza[src_offset];             // Azul
@@ -354,35 +358,54 @@ rewind(fzao);
             verdi = pixelData_cortado[dest_offset+2];
 
 
-
             uint8_t GR = (0.11*azur+0.59*verdi+0.3*vermei);
 
-             int BW;
+            uint8_t BW;
             //transformando em branco
             if(GR>limiar)
             {
-                BW = 255;
+                BW = 1;
             }
-            else
+            else if(GR <= limiar)
             {
                 BW=0;
             }
 
 
 
-            pixelData_cortado[dest_offset] = BW;             // Azul
-            pixelData_cortado[dest_offset + 1] = BW;     // Verde
-            pixelData_cortado[dest_offset + 2] = BW;     // Vermelho
 
 
+
+            byte[cont] = BW;
+            printf("%i",cont);
+
+
+
+
+            cont++;
+            if(cont==8)
+            {
+                 printf("%s",byte);
+
+
+                for(int k=0;k<8;k++)
+                {
+                    printf("%i\n",valorDecimal);
+                    if(byte[k]==1)
+                    {
+                        valorDecimal += 1<<(7-k);
+                    }
+                }
+
+                fprintf(cortado, "0x%x, ", valorDecimal);
+                cont = 0;
+                valorDecimal = 0;
+
+            }
 
         }
     }
-
-    // Escrever os dados de pixel modificados no arquivo de saída
-    fwrite(pixelData_cortado, 1, 84 * 48*3, cortado);
-
-
+    fprintf(cortado, "}");
 
 
 
@@ -407,6 +430,5 @@ rewind(fzao);
 
     return 0;
 }
-
 
 
